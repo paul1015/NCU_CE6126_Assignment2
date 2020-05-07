@@ -1,62 +1,83 @@
 import numpy as np
 
-class RbfNet(object):
-    def __init__(self, theta, thegma, weight):
-        self.value = 1
+class rbfNet(object):
+    def __init__(self, thegma, weight, m, theta):
+
         self.theta = theta
         self.thegma = thegma
+        self.m = m
         self.weight = weight
 
-    def gaussian (self,x, m):
 
-        n =  np.exp(-((np.sum(np.square(x-m)) / (2 * np.square(self.theta)))))
-        n = self.mul_weight(n)
-        n = self.add_thegma(n)
+    def output (self, x):
+        fx = self.add_thegma(0)
+        nn = np.array([1, 1, 1])
+        print('nn = ', nn.shape)
+        print('row of m', np.size(self.m, 0))
+        for i in range(np.size(self.m, 0)):
+            print('i = ', i)
+            m = self.m[i:i+1, ]
+            m = np.reshape(m, (3,))
+            print('in put gaussan value', m, m.shape)
+            g = self.gaussan(x, i, m)
+            print('g = ', g)
+            w = self.mul_weight(g, i)
+            print('fx, w = ', fx, w)
+            fx  = fx + w
+        return fx
+            
 
+    def gaussan(self, x, i, m):
+        theta = self.theta[0][i]
+        print('theta = ', theta)
+        n =  np.exp(-((np.sum(np.square(x-m)) / (2 * np.square(theta)))))
         return n
-    
-    def mul_weight(self, n):
-        n = n * self.weight
+
+    def mul_weight(self, n, i):
+        n = n * self.weight[0][i]
         return n
 
     def add_thegma(self, n):
-        n = n + self.thegma
+        n = n + self.thegma[0][0]
         return n
 
 
 def main():
-    x = np.array([-0.45, -0.79, -0.79])
-    m = np.array([1, 1, 1])
-
-    theta = np.array([1])
-    thegma = np.array([1])
-    weight = np.array([1])
-
-    rbfn = RbfNet(theta, thegma, weight)
-    g = rbfn.gaussian(x, m)
-
-    print('g = ', g)
-
     dataset = '4d'
     print('dataset = ', dataset)
     j = 2
     swarm_num = 5
     dim = 1 + j + 3*j + j
+    x = np.array([-0.45, -0.79,-0.79])
 
     print('dim = ', dim)
     size = (swarm_num, dim)
     g_data = np.random.uniform(-1, 1, size)
     print('g_data = ', g_data.shape, g_data)
-    for i in range(swarm_num):
-        thegma = g_data[i:i+1, 0:1]
-        print('thegma = ', thegma)
-        weight = g_data[i:i+1, 1: j+1]
-        print('weight = ', weight)
-        theta = g_data[i:i+1, dim-j: dim]
-        print('theta = ', theta)
-        m = g_data[i: i+1, j+1: j+1+(3*j )]
-        m = np.reshape(m, (j, 3))
-        print('m = ', m)
+    thegma = np.array([[1]])
+    weight = np.array([[1,1]])
+    theta = np.array([[1,1]])
+    m = np.array([[1, 1, 1], [1, 1, 1]])
+    print('thegma = ', thegma.shape)
+    print('weight = ', weight.shape)
+    print('theta = ', theta.shape)
+    print('m = ', m.shape)
+    net = rbfNet(thegma, weight, m, theta)
+    fx = net.output(x)
+    print('net.output ', fx)
+    # for i in range(swarm_num):
+    #     thegma = g_data[i:i+1, 0:1]
+    #     print('thegma = ', thegma.shape)
+    #     weight = g_data[i:i+1, 1: j+1]
+    #     print('weight = ', weight.shape)
+    #     theta = g_data[i:i+1, dim-j: dim]
+    #     print('theta = ', theta.shape)
+    #     m = g_data[i: i+1, j+1: j+1+(3*j )]
+    #     m = np.reshape(m, (j, 3))
+    #     print('m = ', m.shape)
+
+    #     net = rbfNet(thegma, weight, m, theta)
+    #     net.output(x)
 
 if __name__ == "__main__":
     main()
