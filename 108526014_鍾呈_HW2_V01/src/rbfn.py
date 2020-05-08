@@ -12,15 +12,14 @@ class rbfNet(object):
     def output (self, x):
         fx = self.add_thegma(0)
         nn = np.array([1, 1, 1])
-        print('nn = ', nn.shape)
-        print('row of m', np.size(self.m, 0))
+        # print('nn = ', nn.shape)
+        # print('row of m', np.size(self.m, 0))
         for i in range(np.size(self.m, 0)):
-            print('i = ', i)
+            # print('i = ', i)
             m = self.m[i:i+1, ]
-            m = np.reshape(m, (3,))
-            print('in put gaussan value', m, m.shape)
+            # print('in put gaussan value', m, m.shape)
             g = self.gaussan(x, i, m)
-            print('g = ', g)
+            # print('g = ', g)
             w = self.mul_weight(g, i)
             print('fx, w = ', fx, w)
             fx  = fx + w
@@ -43,28 +42,44 @@ class rbfNet(object):
 
 
 def main():
+    #set initial data
     dataset = '4d'
     print('dataset = ', dataset)
     j = 2
     swarm_num = 5
     dim = 1 + j + 3*j + j
-    x = np.array([-0.45, -0.79,-0.79])
-
     print('dim = ', dim)
+    x = np.array([[22, 8.4, 8.4, 0]])
+    ix = x[: 1, 0: 3]
+    y = x[: 1, 3: ]
+    print('ix, y', ix, y)
+    ix = (ix - 40) /40
+    y = y/40
+    print('ix, y', ix, y)
+
+    f_output = np.array([])
+    # creat initial generatic set
     size = (swarm_num, dim)
     g_data = np.random.uniform(-1, 1, size)
-    print('g_data = ', g_data.shape, g_data)
+    
+
     thegma = np.array([[1]])
     weight = np.array([[1,1]])
     theta = np.array([[1,1]])
     m = np.array([[1, 1, 1], [1, 1, 1]])
-    print('thegma = ', thegma.shape)
-    print('weight = ', weight.shape)
-    print('theta = ', theta.shape)
-    print('m = ', m.shape)
+    
+    # set input data 
     net = rbfNet(thegma, weight, m, theta)
-    fx = net.output(x)
-    print('net.output ', fx)
+    fx = net.output(ix)
+    fx = np.array([[fx]])
+    
+
+    print('fff', f_output)
+    # compute error 
+    error = np.sum(fx-y)/1
+    print('error = ', error)
+    angle = fx * 40
+    print('output_angle', angle)
     # for i in range(swarm_num):
     #     thegma = g_data[i:i+1, 0:1]
     #     print('thegma = ', thegma.shape)
