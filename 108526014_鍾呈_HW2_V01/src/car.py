@@ -2,9 +2,49 @@ from tkinter import *
 import tkinter as tkinter
 import math as math
 import time
+import numpy as np
 
 #圖片的 軸是從左上角開始 x 是正 y 是負 
 #theta car_angle
+
+# rbfn Net
+class rbfNet(object):
+    def __init__(self, thegma, weight, m, theta):
+
+        self.theta = theta
+        self.thegma = thegma
+        self.m = m
+        self.weight = weight
+
+
+    def output (self, x):
+        fx = self.add_thegma(0)
+        # print('nn = ', nn.shape)
+        # print('row of m', np.size(self.m, 0))
+        for i in range(np.size(self.m, 0)):
+            # print('i = ', i)
+            m = self.m[i:i+1, ]
+            # print('in put gaussan value', m, m.shape)
+            g = self.gaussan(x, i, m)
+            # print('g = ', g)
+            w = self.mul_weight(g, i)
+            # print('fx, w = ', fx, w)
+            fx  = fx + w
+        return fx          
+
+    def gaussan(self, x, i, m):
+        theta = self.theta[0][i]
+        # print('theta = ', theta)
+        n =  np.exp(-((np.sum(np.square(x-m)) / (2 * np.square(theta)))))
+        return n
+
+    def mul_weight(self, n, i):
+        n = n * self.weight[0][i]
+        return n
+
+    def add_thegma(self, n):
+        n = n + self.thegma[0][0]
+        return n
 
 class car:
     #  初始化資料 主要是輸入座標和實際座標上的轉換
@@ -460,6 +500,37 @@ t = 0
 
 #初始角度 為 0
 d,ld,rd,gd, dd = car.car_move(canvas, car_obj, 0)
+# 轉用 rbnf 的方式
+# 輸入設定
+x = np.array([[d, ld, rd]])
+x = x / 40
+#net 網路設定
+
+g_data = np.array([[-0.04015934, -0.45446857, -0.48167265, -0.62123329, -0.94642768, -0.85106759,
+  0.56391162,  0.65925203,  0.93584463, -0.37592369,  0.21455495,  0.51825067,
+  1.08399217,  0.77351621,  0.28839495,  0.04285314, -0.71819834, -0.98916118,
+ -0.5446468,  -0.27764103,  0.45309865,  0.55537898, -0.34989358,  1.44245733,
+ -0.48487562, -0.30201483, -0.31626552, -0.65584457, -0.45627304,  0.61370674,
+ -1.02590744, -0.67832392, -1.40353055,  0.60321659, -0.30556981, -0.55150579,
+  0.84721664,  0.52902021, -0.11858349,  0.90939813, -1.16363913, -0.33043132,
+ -0.13789066, -0.57926442,  0.27215405, -1.6677812,   0.6142357,  -0.12932297,
+  1.2405557,   0.65381407, -0.3749507 ]])
+
+j = 10
+dim = 1 + j + 3*j + j
+
+thegma = g_data[:, 0:1]
+# print('thegma = ', thegma.shape)
+weight = g_data[:, 1: j+1]
+# print('weight = ', weight.shape)
+theta = g_data[:, dim-j: dim]
+# print('theta = ', theta.shape)
+m = g_data[:, j+1: j+1+(3*j )]
+m = np.reshape(m, (j, 3))
+# print('m = ', m.shape)
+print('check input of net = ', thegma, weight, theta, m)
+# set input data
+net = rbfNet(thegma, weight, m, theta)
 
 dd = 100
 
@@ -468,11 +539,19 @@ while 1:
     if(gd == -1):
         gd = 100
     if(gd >= 3 and dd >=3):
+        
+        # fuzzy system
+        # t = car.fuuzzyRule(d, ld, rd)
+        # rbfNet
+        print("input x ", x, x * 40)
+        t = net.output(x)
+        t = t * 40
         print("t  = ", t)
-        #fuzzy system
-        t = car.fuuzzyRule(d, ld, rd)
         #move based on fuzzy system
         d,ld,rd,gd, dd = car.car_move(canvas, car_obj, t)
+        x = np.array([[d, ld, rd]])
+        x = x / 40
+
         time.sleep(0.7)
         tk.update()
         canvas.update()

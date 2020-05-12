@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-#rbfn Net
+# rbfn Net
 class rbfNet(object):
     def __init__(self, thegma, weight, m, theta):
 
@@ -28,7 +28,7 @@ class rbfNet(object):
 
     def gaussan(self, x, i, m):
         theta = self.theta[0][i]
-        #print('theta = ', theta)
+        # print('theta = ', theta)
         n =  np.exp(-((np.sum(np.square(x-m)) / (2 * np.square(theta)))))
         return n
 
@@ -49,7 +49,7 @@ class geneticOptimizer(object):
         self.cro_rate = 0.5
         self.mut_rate = 0.4
 
-        #err_rate to fitness function
+        # err_rate to fitness function
 
         fitness = np.abs(err_rate)
         fitness = 1 - fitness 
@@ -144,11 +144,13 @@ def main():
     # set initial data
     dataset = '4d'
     print('dataset = ', dataset)
-    j = 2
-    swarm_num = 5
-    epoch_num = 10
+    j = 10
+    swarm_num = 50
+    epoch_num = 100
     dim = 1 + j + 3*j + j
     print('dim = ', dim)
+
+    # sigle data
     x = np.array([[22, 8.4, 8.4, 0]])
     ix = x[: 1, 0: 3]
     y = x[: 1, 3: ]
@@ -158,7 +160,30 @@ def main():
     y = y/40
     print('ix, y', ix, y)
 
-    
+    # multiple data 
+    #讀取檔案資料
+    f = open(r'train4dAll.txt')
+    i = 0
+    for line in f:
+        s = line.split(" ")
+        # print('line s ', s)
+        d = float(s[0])
+        ld = float(s[1])
+        rd = float(s[2])
+        car_angle = float(s[3].split('\n')[0])
+        # print('car information = ', d, ld, rd, car_angle)
+        if(i == 0):
+            xx = np.array([[d, ld, rd]])
+            yy = np.array([[car_angle]])
+        else :
+            xx = np.append(xx, np.array([[d, ld, rd]]), axis=0)
+            yy = np.append(yy, np.array([[car_angle]]), axis=0)
+
+        i = i + 1
+    print('i = ', i)
+    print('shpae of xx , yy = ', xx.shape, yy.shape)
+    xx = (xx - 40)/40
+    yy = yy/40
     # creat initial generatic set
     size = (swarm_num, dim)
     g_data = np.random.uniform(-1, 1, size)
@@ -177,6 +202,7 @@ def main():
     # print('error = ', error)
     # angle = fx * 40
     # print('output_angle', angle)
+    num_x = i 
     best_err = 1
     for e in range (epoch_num):
         for i in range(swarm_num):
@@ -192,12 +218,23 @@ def main():
 
             # set input data
             net = rbfNet(thegma, weight, m, theta)
-            fx = net.output(ix)
-            fx = np.array([[fx]])
+
+            for k in range  (num_x):
+                # print('k = ', k)
+                # print('input data = ', xx[k:k+1, : ])
+                fx = net.output(xx[k:k+1, : ])
+                fx = np.array([[fx]])
+
+                if(k == 0):
+                    fout = np.array(fx)
+                else :
+                    fout = np.append(fout, np.array(fx), axis=0)
+
+            # print('output = ', fout.shape, yy.shape, num_x)
 
             # compute error 
-            error = np.sum(fx-y)/1
-            print('error = ', abs(error))
+            error = np.sum(fout-yy)/num_x
+            # print('error = ', abs(error))
 
             # save error as fitness function
             
@@ -206,24 +243,26 @@ def main():
             else :
                 err_rate = np.append(err_rate, np.array([[error]]), axis=0)
                 
-            angle = fx * 40
+            # angle = fx * 40
             # print('output_angle = ', angle)
             if(abs(error) < best_err):
                 best_err = abs(error)
-                best_angle = angle
                 best_var = g_data[i]
 
 
 
-        print('error rate = ',  err_rate)
+        # print('error rate = ',  err_rate)
 
         # put data and error rate in geneticOptimizer
         g_opt = geneticOptimizer(g_data, err_rate)
 
         #update variable 
-        undpte_swarm = g_opt.genatic_opt()
-        #print('undpte_swarm = ', undpte_swarm)
-        print('best -->', best_err, best_angle, best_var)
+        g_opt.genatic_opt()
+        # print('undpte_swarm = ', undpte_swarm)
+        # print('best -->', best_err, best_angle, best_var)
+        print('best -->', best_err, best_var)
+
+    print('best final err = ', best_err, best_var)
 
 if __name__ == "__main__":
     main()
