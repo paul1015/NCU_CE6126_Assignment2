@@ -1,6 +1,7 @@
 import numpy as np
 import random
-
+import sys
+# np.set_printoptions(threshold=sys.maxsize)
 # rbfn Net
 class rbfNet(object):
     def __init__(self, thegma, weight, m, theta):
@@ -50,8 +51,8 @@ class geneticOptimizer(object):
         self.err_rate = err_rate
         
         self.rep_rate = 0.3
-        self.cro_rate = 0.5
-        self.mut_rate = 0.5
+        self.cro_rate = 0.9
+        self.mut_rate = 0.9
 
         self.cro_theta = 0.1
         self.mut_s = 50
@@ -157,19 +158,19 @@ def main():
     # set initial data
     dataset = '4d'
     print('dataset = ', dataset)
-    j = 2
+    j = 10
     swarm_num = 50
-    epoch_num = 10
+    epoch_num = 100
     dim = 1 + j + 3*j + j
     print('dim = ', dim)
 
     # sigle data
-    x = np.array([[13.9964, 07.8000, 21.0798, -16.543]])
+    x = np.array([[22.0000, 08.4853, 08.4853, 000.000]])
     ix = x[: 1, 0: 3]
     y = x[: 1, 3: ]
     print('ix, y', ix, y)
     # normalize data
-    ix = (ix - 40) /40
+    # ix = (ix - 40) /40
     # y = y/40
     print('ix, y', ix, y)
 
@@ -193,14 +194,17 @@ def main():
             yy = np.append(yy, np.array([[car_angle]]), axis=0)
 
         i = i + 1
+        if(i == 50) :
+            break
     print('i = ', i)
     print('shpae of xx , yy = ', xx.shape, yy.shape)
     xx = (xx - 40)/40
     # yy = yy/40
     # creat initial generatic set
     size = (swarm_num, dim)
-    g_data = np.random.uniform(0, 100, size)
+    g_data = np.random.uniform(-100, 100, size)
     print('g_data = ', g_data)
+    # print('g_data = ', g_data)
     
     # authntication rbfNet used
     # thegma = np.array([[1]])
@@ -220,13 +224,14 @@ def main():
     best_err = 100
     best_var = 100
     for e in range (epoch_num):
+        print('e = ', e)
         for i in range(swarm_num):
             # print('e, i = ', e, i)
             thegma = g_data[i:i+1, 0:1]
             # print('thegma = ', thegma.shape)
             weight = g_data[i:i+1, 1: j+1]
             # print('weight = ', weight.shape)
-            theta = g_data[i:i+1, dim-j: dim]
+            theta = np.absolute(g_data[i:i+1, dim-j: dim])
             # print('theta = ', theta.shape)
             m = g_data[i: i+1, j+1: j+1+(3*j )]
             m = np.reshape(m, (j, 3))
@@ -234,9 +239,12 @@ def main():
 
             # set input data
             net = rbfNet(thegma, weight, m, theta)
-            
+            # single input
+
             fx = net.output(ix)
             fx = np.array([[fx]])
+
+            # multuple input
             # for k in range  (num_x):
             #     # print('k = ', k)
             #     # print('input data = ', xx[k:k+1, : ])
@@ -251,9 +259,11 @@ def main():
             # print('output = ', fout, yy, num_x)
 
             # compute error 
-
-            # error = np.sum(fout-yy)/num_x
+            # multiple output
+            # error = np.sum(abs(fout-yy))/num_x
             # print('fx, y', fx, y)
+
+            # single error
             error = np.sum(fx-y)/1
             # print('error = ', abs(error))
 
@@ -269,13 +279,14 @@ def main():
             if(abs(error) < best_err):
                 best_err = abs(error)
                 best_var = g_data[i:i+1, :]
+                # best_angle = fout
                 best_angle = fx
                 prdict_angle = y
 
 
 
         # print('error rate = ',  err_rate)
-        print('best -->', best_err, best_var, best_angle, prdict_angle)
+        # print('best -->', best_err, best_var, best_angle, prdict_angle)
         # put data and error rate in geneticOptimizer
         # print('input genatic = ', err_rate)
         g_opt = geneticOptimizer(g_data, err_rate)
@@ -286,7 +297,10 @@ def main():
         # print('best -->', best_err, best_angle, best_var)
         
 
-    print('best --> ', best_err, best_var, best_angle, prdict_angle)
+    print('best --> ', best_err, best_var)
+    print('best angle --> ', best_angle)
+    print('predict angle --> ', prdict_angle)
+    
 
 if __name__ == "__main__":
     main()
