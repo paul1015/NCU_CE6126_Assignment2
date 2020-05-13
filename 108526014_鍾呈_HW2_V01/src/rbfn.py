@@ -24,16 +24,19 @@ class rbfNet(object):
             w = self.mul_weight(g, i)
             # print('fx, w = ', fx, w)
             fx  = fx + w
+            # print('return value = ', fx)
         return fx          
 
     def gaussan(self, x, i, m):
         theta = self.theta[0][i]
-        # print('theta = ', theta)
+        # print('theta = ', theta, m.shape)
         n =  np.exp(-((np.sum(np.square(x-m)) / (2 * np.square(theta)))))
         return n
 
     def mul_weight(self, n, i):
-        n = n * self.weight[0][i]
+        weight = self.weight[0][i]
+        # print('weight = ', weight, n.shape)
+        n = n * weight
         return n
 
     def add_thegma(self, n):
@@ -44,10 +47,14 @@ class rbfNet(object):
 class geneticOptimizer(object):
     def __init__(self, swarm, err_rate):
         self.swarm = swarm
+        self.err_rate = err_rate
         
         self.rep_rate = 0.3
         self.cro_rate = 0.5
-        self.mut_rate = 0.4
+        self.mut_rate = 0.5
+
+        self.cro_theta = 0.1
+        self.mut_s = 50
 
         # err_rate to fitness function
 
@@ -70,34 +77,38 @@ class geneticOptimizer(object):
 
     # reproducation
     def reproduction(self):
-        self.swarm = self.swarm
-        #  roulette
-        # ignore probability
-        # for i in range(np.size(fitness, 0)):
-            
-        
-        # add noisy
-        # noisy = 0.3
-        # k = 0
-        # l = np.size(self.swarm[0][:], 0)
-        # print('l = ', l)
-        # mod = l % 3
-        # print('mod = ', mod)
-        # for i in range (np.size(self.fitness, 0)):
-        #     if(k == 0):
-        #         print('self.swarm = ', self.swarm[i][0: mod + 1])
-        #         self.swarm[i][0: mod + 1] = self.swarm[i][0: mod + 1] + self.swarm[i][0: mod + 1]
-        #         self.swarm[i][:]
-        #         k = 1
+        # print('self.swarm = ', self.swarm.shape)
+        # error_rate = np.sort(self.err_rate , axis=0)
+        # print('error_rate = ', error_rate)
 
-        #     else :
-        #         rep_swarm = np.append(rep_swarm, np.array([self.swarm[i][:]]), axis=0)
-                
-        # print('rep_swarm', self.swarm)  
+        y = np.argsort(self.err_rate , axis=0) 
+        # print('y = ', y)
+        # print('y error rate = ')
+        k = 0
+        for i in (y): 
+            # print('i = ', i)
+            int_i = int(i[0])
+            # print('int_i', int_i)
+            a = self.swarm[int_i: int_i + 1, :]
+            # print('a= ', a)
+            if(k == 0):
+                for i in range (10):
+                    if(i == 0 ):
+                        b = a 
+                    else :
+                        b = np.append(b, a, axis=0)
+            else :
+                 for i in range (10):
+                     b = np.append(b, a, axis=0)
+            k = k + 1
+            if(k == 5): 
+                break
+        # print('b = ',  b, b.shape)
+        self.swarm = b
     
     #crossover
     def crossover (self):
-        for i in range (np.size(self.fitness, 0)):
+        for i in range (np.size(self.err_rate, 0)):
             # print('i = ', i)
             size = (1, 1)
             rand_num = np.random.uniform(0, 1, size)
@@ -107,13 +118,15 @@ class geneticOptimizer(object):
                 b = np.random.randint(0,self.swarm.shape[0],2)
                 # print('choose b', b)
                 # two point croosover
-                for j in range (2):
+                for j in range (4):
                     n= random.randint(0, np.size(self.swarm[0], 0) - 1 )
                     # print('n = ', n)
                     # cross over part 
-                    reg_val = self.swarm[b[0]][n]
-                    self.swarm[b[0]][n] = self.swarm[b[1]][n]
-                    self.swarm[b[1]][n] = reg_val
+                    b0 = self.swarm[b[0]][n]
+                    b1 = self.swarm[b[1]][n]
+
+                    self.swarm[b[0]][n] = self.swarm[b[0]][n] + (b0 - b1) * self.cro_rate
+                    self.swarm[b[1]][n] =self.swarm[b[1]][n] +  (b0 - b1) * self.cro_rate 
                     # print('cross self.swarm', self.swarm)
 
                 # if(k == 0):
@@ -125,7 +138,7 @@ class geneticOptimizer(object):
                 #     # print('rep 1 = ', rep_swarm)
     # mutation 
     def mutation (self):
-        for i in range (np.size(self.fitness, 0)):
+        for i in range (np.size(self.err_rate, 0)):
             size = (1, 1)
             rand_num = np.random.uniform(0, 1, size)
 
@@ -133,10 +146,10 @@ class geneticOptimizer(object):
                 n= random.randint(0, np.size(self.swarm[i], 0) - 1)
                 # creat noisy
                 size = (1, 1)
-                noisy = np.random.uniform(-1, 1, size)
+                noisy = np.random.uniform(0, 1, size)
 
                 # print('noisy = ', noisy, i , n )
-                self.swarm[i][n] = self.swarm[i][n] + noisy
+                self.swarm[i][n] = self.swarm[i][n] + noisy * self.mut_s
 
                 # print('mut swarm', self.swarm)
 
@@ -144,20 +157,20 @@ def main():
     # set initial data
     dataset = '4d'
     print('dataset = ', dataset)
-    j = 10
+    j = 2
     swarm_num = 50
-    epoch_num = 100
+    epoch_num = 10
     dim = 1 + j + 3*j + j
     print('dim = ', dim)
 
     # sigle data
-    x = np.array([[22, 8.4, 8.4, 0]])
+    x = np.array([[13.9964, 07.8000, 21.0798, -16.543]])
     ix = x[: 1, 0: 3]
     y = x[: 1, 3: ]
     print('ix, y', ix, y)
     # normalize data
     ix = (ix - 40) /40
-    y = y/40
+    # y = y/40
     print('ix, y', ix, y)
 
     # multiple data 
@@ -183,10 +196,11 @@ def main():
     print('i = ', i)
     print('shpae of xx , yy = ', xx.shape, yy.shape)
     xx = (xx - 40)/40
-    yy = yy/40
+    # yy = yy/40
     # creat initial generatic set
     size = (swarm_num, dim)
-    g_data = np.random.uniform(-1, 1, size)
+    g_data = np.random.uniform(0, 100, size)
+    print('g_data = ', g_data)
     
     # authntication rbfNet used
     # thegma = np.array([[1]])
@@ -203,9 +217,11 @@ def main():
     # angle = fx * 40
     # print('output_angle', angle)
     num_x = i 
-    best_err = 1
+    best_err = 100
+    best_var = 100
     for e in range (epoch_num):
         for i in range(swarm_num):
+            # print('e, i = ', e, i)
             thegma = g_data[i:i+1, 0:1]
             # print('thegma = ', thegma.shape)
             weight = g_data[i:i+1, 1: j+1]
@@ -218,22 +234,27 @@ def main():
 
             # set input data
             net = rbfNet(thegma, weight, m, theta)
+            
+            fx = net.output(ix)
+            fx = np.array([[fx]])
+            # for k in range  (num_x):
+            #     # print('k = ', k)
+            #     # print('input data = ', xx[k:k+1, : ])
+            #     fx = net.output(xx[k:k+1, : ])
+            #     fx = np.array([[fx]])
 
-            for k in range  (num_x):
-                # print('k = ', k)
-                # print('input data = ', xx[k:k+1, : ])
-                fx = net.output(xx[k:k+1, : ])
-                fx = np.array([[fx]])
+            #     if(k == 0):
+            #         fout = np.array(fx)
+            #     else :
+            #         fout = np.append(fout, np.array(fx), axis=0)
 
-                if(k == 0):
-                    fout = np.array(fx)
-                else :
-                    fout = np.append(fout, np.array(fx), axis=0)
-
-            # print('output = ', fout.shape, yy.shape, num_x)
+            # print('output = ', fout, yy, num_x)
 
             # compute error 
-            error = np.sum(fout-yy)/num_x
+
+            # error = np.sum(fout-yy)/num_x
+            # print('fx, y', fx, y)
+            error = np.sum(fx-y)/1
             # print('error = ', abs(error))
 
             # save error as fitness function
@@ -247,22 +268,25 @@ def main():
             # print('output_angle = ', angle)
             if(abs(error) < best_err):
                 best_err = abs(error)
-                best_var = g_data[i]
+                best_var = g_data[i:i+1, :]
+                best_angle = fx
+                prdict_angle = y
 
 
 
         # print('error rate = ',  err_rate)
-
+        print('best -->', best_err, best_var, best_angle, prdict_angle)
         # put data and error rate in geneticOptimizer
+        # print('input genatic = ', err_rate)
         g_opt = geneticOptimizer(g_data, err_rate)
 
         #update variable 
-        g_opt.genatic_opt()
+        g_data = g_opt.genatic_opt()
         # print('undpte_swarm = ', undpte_swarm)
         # print('best -->', best_err, best_angle, best_var)
-        print('best -->', best_err, best_var)
+        
 
-    print('best final err = ', best_err, best_var)
+    print('best --> ', best_err, best_var, best_angle, prdict_angle)
 
 if __name__ == "__main__":
     main()
