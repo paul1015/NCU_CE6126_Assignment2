@@ -46,16 +46,15 @@ class rbfNet(object):
 
 # geneticOptimizer
 class geneticOptimizer(object):
-    def __init__(self, swarm, err_rate, j ,dim):
+    def __init__(self, swarm, err_rate, j, dim):
         self.swarm = swarm
         self.err_rate = abs(err_rate)
         
         self.cro_rate = 0.9
-        self.mut_rate = 0.7
+        self.mut_rate = 0.9
 
-        self.cro_theta = 0.05
-        self.mut_s = 5
-
+        self.cro_theta = 0.1
+        self.mut_s = 20
         self.j = j
         self.dim = dim
         
@@ -111,7 +110,7 @@ class geneticOptimizer(object):
                 b = np.random.randint(0,self.swarm.shape[0],2)
                 # print('choose b', b)
                 # two point croosover
-                for j in range (50):
+                for j in range (20):
                     n= random.randint(0, np.size(self.swarm[0], 0) - 1 )
                     # print('n = ', n)
                     # cross over part 
@@ -124,12 +123,12 @@ class geneticOptimizer(object):
                     if(n >= self.dim - self.j ):
                         if(bs0 >= 0):
                             self.swarm[b[0]][n] = bs0
-                        else :
-                            self.swarm[b[0]][n] = abs(bs0)
+                        # else :
+                        #     self.swarm[b[0]][n] = bs0
                         if(bs1 >= 0):
-                            self.swarm[b[0]][n] = bs1
-                        else :
-                            self.swarm[b[0]][n] = abs(bs1)
+                            self.swarm[b[1]][n] = bs1
+                        # else :
+                        #     self.swarm[b[0]][n] = bs1
 
                     else :
                         self.swarm[b[0]][n] = bs0
@@ -142,15 +141,15 @@ class geneticOptimizer(object):
                 #     k = 1
                 # else :
                 #     rep_swarm = np.append(rep_swarm, np.array([self.swarm[j][:]]), axis=0)
-                #     # print('rep 1 = ', rep_swarm) 1 = ', rep_swarm)
-   # mutation 
+                #     # print('rep 1 = ', rep_swarm)
+    # mutation 
     def mutation (self):
         for i in range (np.size(self.err_rate, 0)):
             size = (1, 1)
             rand_num = np.random.uniform(0, 1, size)
             if(rand_num < self.mut_rate):
                 
-                for j in range (50):
+                for j in range (20):
                     n= random.randint(0, np.size(self.swarm[i], 0) - 1)
                     # creat noisy
                     size = (1, 1)
@@ -164,13 +163,14 @@ class geneticOptimizer(object):
                         if(mut_n >= 0):
                             # print("n non minus")
                             self.swarm[i][n] = mut_n
-                        else :
-                            # print("n minus")
-                            self.swarm[i][n] = 0.001
+                        # else :
+                        #     # print("n minus")
+                        #     self.swarm[i][n] = 0
                     else :
                         self.swarm[i][n] = mut_n
 
                     # print('mut swarm', self.swarm)
+
 
 def main():
     # set initial data
@@ -178,17 +178,16 @@ def main():
     print('dataset = ', dataset)
     j = 20
     swarm_num = 60
-    epoch_num = 100
-    train_barch = 5
+    epoch_num = 10
     dim = 1 + j + 3*j + j
     print('dim = ', dim)
 
-    # sigle data
     # 09.7355, 10.9379, 18.5740, -40.000
     # 26.7355, 09.0238, 08.6122, 000.000
     # 11.5011, 20.8353, 11.1280, 40.000
 
-    x = np.array([[09.7355, 10.9379, 18.5740, -40.000]])
+    # sigle data
+    x = np.array([[11.5011, 20.8353, 11.1280, 40.000]])
     ix = x[: 1, 0: 3]
     y = x[: 1, 3: ]
     print('ix, y', ix, y)
@@ -199,7 +198,7 @@ def main():
 
     # multiple data 
     #讀取檔案資料
-    f = open(r'testFile.txt')
+    f = open(r'train4dAll.txt')
     i = 0
     for line in f:
         s = line.split(" ")
@@ -217,17 +216,16 @@ def main():
             yy = np.append(yy, np.array([[car_angle]]), axis=0)
 
         i = i + 1
-        if(i == 10):
+        if(i == 50) :
             break
-        
     print('i = ', i)
     print('shpae of xx , yy = ', xx.shape, yy.shape)
     # xx = (xx - 40)/40
     # yy = yy/40
     # creat initial generatic set
     size = (swarm_num, dim)
-    g_data = np.random.uniform( 0, 10, size)
-    # print('g_data = ', g_data)
+    g_data = np.random.uniform(-100, 100, size)
+    print('g_data = ', g_data)
     # print('g_data = ', g_data)
     
     # authntication rbfNet used
@@ -247,104 +245,85 @@ def main():
     num_x = i 
     best_err = 100
     best_var = 100
-    for epoch  in range (epoch_num):
-        print('e = ', epoch)
-        for b in range (num_x):
-            # bx = xx[b:b+train_barch, : ]
-            # by = yy[b:b+train_barch, :]
-            bx = xx[b: b+ 1:, :]
-            # print('by = > ', b,by)
-            for i in range(swarm_num):
-                g_data[i:i+1, dim-j: dim] = abs(g_data[i:i+1, dim-j: dim])
-                # print('e, i = ', e, i)
-                thegma = g_data[i:i+1, 0:1]
-                # print('thegma = ', thegma.shape)
-                weight = g_data[i:i+1, 1: j+1]
-                # print('weight = ', weight.shape)
-                theta = g_data[i:i+1, dim-j: dim]
-                # print('theta = ', theta)
-                m = g_data[i: i+1, j+1: j+1+(3* j )]
-                m = np.reshape(m, (j, 3))
-                # print('m = ', m.shape)
+    for e in range (epoch_num):
+        print('e = ', e)
+        for i in range(swarm_num):
+            g_data[i:i+1, dim-j: dim] = abs(g_data[i:i+1, dim-j: dim] / 10)
+            # print('e, i = ', e, i)
+            thegma = g_data[i:i+1, 0:1]
+            # print('thegma = ', thegma.shape)
+            weight = g_data[i:i+1, 1: j+1]
+            # print('weight = ', weight.shape)
+            theta = np.absolute(g_data[i:i+1, dim-j: dim])
+            # print('theta = ', theta.shape)
+            m = g_data[i: i+1, j+1: j+1+(3*j )]
+            m = np.reshape(m, (j, 3))
+            # print('m = ', m.shape)
 
-                # set batch input data
-                net = rbfNet(thegma, weight, m, theta)
-                # for bb in range  (num_x):
-                #     # print('k = ', k)
-                #     # print('input data = ', xx[k:k+1, : ])
-                #     f_total = net.output(bx[bb:bb+1, : ])
-                #     f_total= np.array([[f_total]])
+            # set input data
+            net = rbfNet(thegma, weight, m, theta)
+            # single input
 
-                #     if(bb == 0):
-                #         f_b = np.array(f_total)
-                #     else :
-                #         f_b = np.append(f_b, np.array(f_total), axis=0)
+            fx = net.output(ix)
+            fx = np.array([[fx]])
 
-                # error = np.sum(abs(f_b - yy))/num_x
-                # if(i == 0):
-                #     err_rate = np.array([[error]])
-                # else :
-                #     err_rate = np.append(err_rate, np.array([[error]]), axis=0)
-               
-                # single input
-                # print('bx = ', bx)
-                fx = net.output(bx)
-                fx = np.array([[fx]])
-                error = np.sum(abs(fx - yy[b]))/1
-                # print('error => ', error)
-                if(i == 0):
-                    err_rate = np.array([[error]])
-                else :
-                    err_rate = np.append(err_rate, np.array([[error]]), axis=0)
-                # # single error
-                # print('fx yy => ', epoch, i,fx, yy[b])
-                # error = np.sum(fx - yy[b])/1
-                # if(i == 0):
-                #     err_rate = np.array([[error]])
-                # else :
-                #     err_rate = np.append(err_rate, np.array([[error]]), axis=0)
+            # multuple input
+            # for k in range  (num_x):
+            #     # print('k = ', k)
+            #     # print('input data = ', xx[k:k+1, : ])
+            #     fx = net.output(xx[k:k+1, : ])
+            #     fx = np.array([[fx]])
 
-                # check total error rate input
-                for k in range  (num_x):
-                    # print('k = ', k)
-                    # print('input data = ', xx[k:k+1, : ])
-                    f_total = net.output(xx[k:k+1, : ])
-                    f_total= np.array([[f_total]])
+            #     if(k == 0):
+            #         fout = np.array(fx)
+            #     else :
+            #         fout = np.append(fout, np.array(fx), axis=0)
 
-                    if(k == 0):
-                        fout = np.array(f_total)
-                    else :
-                        fout = np.append(fout, np.array(f_total), axis=0)
+            # print('output = ', fout, yy, num_x)
 
-                # print('output = ', fout, yy, num_x)
+            # compute error 
+            # multiple output
+            # error = np.sum(abs(fout-yy))/num_x
+            # print('fx, y', fx, y)
 
-                # compute error 
-                # multiple output
-                error_total = np.sum(abs(fout-yy))/num_x
-                if(error_total < best_err):
-                    best_err  = error_total
-                    best_var = g_data[i]
-                    pre_angle = fout
-                    best_epoch = epoch
-                if(i == 0):
-                    error_t = np.array([[error_total]])
-                else :
-                    error_t = np.append(err_rate, np.array([[error_total]]), axis=0)
+            # single error
+            error = np.sum(fx-y)/1
+            # print('error = ', abs(error))
+
+            # save error as fitness function
+            
+            if(i == 0):
+                err_rate = np.array([[error]])
+            else :
+                err_rate = np.append(err_rate, np.array([[error]]), axis=0)
                 
+            # angle = fx * 40
+            # print('output_angle = ', angle)
+            if(abs(error) < best_err):
+                print('error update =>  ', abs(error), g_data[i:i+1, :])
+                best_err = abs(error)
+                best_var = g_data[i:i+1, :]
+                # best_angle = fout
+                best_angle = fx
+                prdict_angle = y
 
-            # put data and error rate in geneticOptimizer
-            # print('error_rate = ', err_rate, epoch)
-            g_opt = geneticOptimizer(g_data, err_rate, j,  dim)
-
-            # update variable 
-            g_data = g_opt.genatic_opt()
-            # print('undpte_swarm = ', undpte_swarm)
-            # print('best -->', best_err, best_angle, best_var)
 
 
-        print('epoch best --> ', best_err, best_var, pre_angle, best_epoch, j, dim)
+        # print('error rate = ',  err_rate)
+        # print('best -->', best_err, best_var, best_angle, prdict_angle)
+        # put data and error rate in geneticOptimizer
+        # print('input genatic = ', err_rate)
+        g_opt = geneticOptimizer(g_data, err_rate, j, dim)
+
+        #update variable 
+        g_data = g_opt.genatic_opt()
+        # print('undpte_swarm = ', undpte_swarm)
+        # print('best -->', best_err, best_angle, best_var)
         
-    print('global best --> ', best_err, best_var, pre_angle, best_epoch)
+
+    print('best --> ', best_err, best_var)
+    print('best angle --> ', best_angle)
+    print('predict angle --> ', prdict_angle)
     
 
 if __name__ == "__main__":
