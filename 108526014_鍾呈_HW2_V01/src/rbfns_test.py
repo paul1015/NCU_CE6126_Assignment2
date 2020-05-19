@@ -106,33 +106,36 @@ class geneticOptimizer(object):
             rand_num = np.random.uniform(0, 1, size)
             # print('rand ', rand_num, self.cro_rate)
             if(rand_num < self.cro_rate):
-                
-                b = np.random.randint(0,self.swarm.shape[0],2)
                 # print('choose b', b)
                 # two point croosover
-                for j in range (20):
+                for j in range (10):
                     n= random.randint(0, np.size(self.swarm[0], 0) - 1 )
+                
+                    b = random.randint(0, np.size(self.err_rate, 0) - 1 )
+                    # print('np_size ', np.size(self.swarm[0], 0), np.size(self.err_rate, 0))
                     # print('n = ', n)
                     # cross over part 
-                    b0 = self.swarm[b[0]][n]
-                    b1 = self.swarm[b[1]][n]
-
-                    bs0 = self.swarm[b[0]][n] + (b0 - b1) *  self.cro_theta
-                    bs1 =self.swarm[b[1]][n] +  (b0 - b1) *  self.cro_theta 
-                    
+                    # print('i b n ', i,  b,  n)
+                    # print('self.swarm', self.swarm)
+                    b0 = self.swarm[i][n]
+                    b1 = self.swarm[b][n]
+                    # print('b0 b1', b0, b1)
+                    bs0 = self.swarm[i][n] + (b0 - b1) *  self.cro_theta
+                    bs1 =self.swarm[b][n] -  (b0 - b1) *  self.cro_theta 
+                    # print('bs0 bs1', bs0, bs1)
                     if(n >= self.dim - self.j ):
                         if(bs0 >= 0):
-                            self.swarm[b[0]][n] = bs0
+                            self.swarm[i][n] = bs0
                         # else :
                         #     self.swarm[b[0]][n] = bs0
                         if(bs1 >= 0):
-                            self.swarm[b[1]][n] = bs1
+                            self.swarm[b][n] = bs1
                         # else :
                         #     self.swarm[b[0]][n] = bs1
 
                     else :
-                        self.swarm[b[0]][n] = bs0
-                        self.swarm[b[1]][n] = bs1
+                        self.swarm[i][n] = bs0
+                        self.swarm[b][n] = bs1
                     # print('cross self.swarm', self.swarm)
 
                 # if(k == 0):
@@ -149,14 +152,15 @@ class geneticOptimizer(object):
             rand_num = np.random.uniform(0, 1, size)
             if(rand_num < self.mut_rate):
                 
-                for j in range (20):
+                for j in range (5):
                     n= random.randint(0, np.size(self.swarm[i], 0) - 1)
                     # creat noisy
                     size = (1, 1)
                     noisy = np.random.uniform(-1, 1, size)
-
+                    print('n = ', n, self.swarm[i][n])
                     # print('noisy = ', noisy, i , n )
                     mut_n = self.swarm[i][n] + noisy * self.mut_s
+                    print('mut_n', mut_n)
                     # print('n = ', n, self.dim , self.j ,mut_n)
                     if(n >= self.dim - self.j ):
                         # print('n in = ', n, mut_n)
@@ -176,8 +180,8 @@ def main():
     # set initial data
     dataset = '4d'
     print('dataset = ', dataset)
-    j = 20
-    swarm_num = 60
+    j = 1
+    swarm_num = 50
     epoch_num = 10
     dim = 1 + j + 3*j + j
     print('dim = ', dim)
@@ -187,7 +191,7 @@ def main():
     # 11.5011, 20.8353, 11.1280, 40.000
 
     # sigle data
-    x = np.array([[11.5011, 20.8353, 11.1280, 40.000]])
+    x = np.array([[26.7355, 09.0238, 08.6122, 000.000]])
     ix = x[: 1, 0: 3]
     y = x[: 1, 3: ]
     print('ix, y', ix, y)
@@ -224,7 +228,7 @@ def main():
     # yy = yy/40
     # creat initial generatic set
     size = (swarm_num, dim)
-    g_data = np.random.uniform(-100, 100, size)
+    g_data = np.random.uniform(-1, 1, size)
     print('g_data = ', g_data)
     # print('g_data = ', g_data)
     
